@@ -62,23 +62,35 @@ def find_all_files(dir):
 
 
 def add_track_files(cur_dir, files):
+    for i in files:
+        print(i)
+
     count = 0
+    files_for_txt = []
     if isinstance(files, str):
         files = [files, '']
         del files[1]
 
     if not os.path.exists(cur_dir + '\\.cvs\\cvsData\\trackFiles.txt'):
-        open(cur_dir + '\\.cvs\\cvsData\\trackFiles.txt', 'w+').close()
+        open(cur_dir + '\\.cvs\\cvsData\\trackFiles.txt', 'w+', encoding='utf-8-sig').close()
 
-    with open(cur_dir + '\\.cvs\\cvsData\\trackFiles.txt', 'r') as f:
+    with open(cur_dir + '\\.cvs\\cvsData\\trackFiles.txt', 'r', encoding='utf-8-sig') as f:
         track_files = f.read().splitlines()
 
-    with open(cur_dir + '\\.cvs\\cvsData\\trackFiles.txt', 'a+') as f:
-        for file in files:
-            if file not in track_files:
-                count += 1
-                print('    +' + file)
-                f.write(file + '\n')
+    for t_file in track_files:
+        if t_file not in files:
+            count += 1
+            print('    -' + t_file)
+
+    for file_s in files:
+        files_for_txt.append(file_s)
+        if file_s not in track_files:
+            count += 1
+            print('    +' + file_s)
+
+    with open(cur_dir + '\\.cvs\\cvsData\\trackFiles.txt', 'w', encoding='utf-8-sig') as f:
+        for file_str in files_for_txt:
+            f.write(file_str + '\n')
 
     if count == 0:
         print("Файл(ы) уже отслеживаются")
@@ -101,10 +113,14 @@ if __name__ == "__main__":
 
         elif not value and args.info:
             print('Отслеживаемые файлы:')
-            with open(cur_dir + '\\.cvs\\cvsData\\trackFiles.txt', 'r') as f:
-                track_files = f.read().splitlines()
+            if os.path.exists(cur_dir + '\\.cvs\\cvsData\\trackFiles.txt'):
+                with open(cur_dir + '\\.cvs\\cvsData\\trackFiles.txt', 'r') as f:
+                    track_files = f.read().splitlines()
                 for file in track_files:
                     print('   ' + file)
+            else:
+                print('Нет отслеживаемых файлов\n')
+                print('Введите CVS.py add для получения справки')
 
         elif value == '.' and not args.info:
             file_list = find_all_files(cur_dir)
