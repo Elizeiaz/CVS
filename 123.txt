@@ -1,0 +1,51 @@
+   elif not value and args_info:
+        print('Отслеживаемые файлы:')
+        if os.path.exists(cur_dir + '\\.cvs\\cvsData\\trackFiles.txt'):
+            with open(cur_dir + '\\.cvs\\cvsData\\trackFiles.txt', 'r', encoding='utf-8-sig') as f:
+                track_files = f.read().splitlines()
+            for file in track_files:
+                print('   ' + file)
+        else:
+            print('Нет отслеживаемых файлов\n')
+            print('Введите CVS.py add для получения справки')
+
+    elif value == '.' and not args_info:
+        file_list = find_all_files(cur_dir)
+        add_track_files(cur_dir, file_list, found_change_track_files)
+
+    elif not args_info:
+        file_list = find_all_files(cur_dir)
+
+        if value in file_list:
+            add_track_files(cur_dir, value, found_change_track_files)
+        else:
+            print("Не удалось найти файл " + value)
+
+
+# Ищет номер последнего коммита
+def find_last_ver(cur_dir):
+    way_to_prjVer = cur_dir + '\\.cvs\\prjVer'
+    folders = os.listdir(way_to_prjVer)
+    last_ver = int(0)
+
+    for folder in folders:
+        if os.path.isdir(way_to_prjVer + '\\' + folder):
+            try:
+                if int(last_ver) < int(folder):
+                    last_ver = folder
+            except ValueError:
+                pass
+    return int(last_ver)
+
+
+# Создаёт новую директорию для commit
+def create_new_prjver_dir(cur_dir):
+    way_to_prjVer = cur_dir + '\\.cvs\\prjVer'
+    files = os.listdir(way_to_prjVer)
+    folders = []
+    for file in files:
+        if os.path.isdir(way_to_prjVer + '\\' + file):
+            folders.append(file)
+
+    last_ver = find_last_ver(cur_dir) + 1
+    os.makedirs(way_to_prjVer + '\\' + str(last_ver))

@@ -190,8 +190,9 @@ def create_new_prjver_dir(cur_dir):
 
 def build_file(cur_dir):
     last_ver = find_last_ver(cur_dir) + 1
-    for i in range(1, last_ver):
+    for i in range(last_ver):
         print(i)
+
 
 # Построчное сравнение двух файлов, если изменения были, то выводит True
 def make_diff(cur_dir, file_name):
@@ -223,6 +224,7 @@ def make_diff(cur_dir, file_name):
 
 if __name__ == "__main__":
     cur_dir = os.getcwd()
+    build_file(cur_dir)
     add_deleted_files(cur_dir)
 
     args = checkArgs().parse_args()
@@ -249,4 +251,3 @@ if __name__ == "__main__":
             for t_file in track_files:
                 #make_diff(cur_dir, t_file)
                 pass
-    build_file(cur_dir)
