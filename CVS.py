@@ -63,6 +63,7 @@ def find_all_files(dir):
     return return_files
 
 
+# Возвращает отслеживаемые файлы
 def return_track_files(cur_dir):
     if os.path.exists(cur_dir + '\\.cvs\\cvsData\\trackFiles.txt'):
         with open(cur_dir + '\\.cvs\\cvsData\\trackFiles.txt', 'r', encoding='utf-8-sig') as f:
@@ -71,20 +72,30 @@ def return_track_files(cur_dir):
     return []
 
 
-def add_deleted_files(cur_dir, files):
+# Удаляет "лишние" отслеживаемые файлы, возвращает True, если такие файлы имеются
+def add_deleted_files(cur_dir):
+    files = find_all_files(cur_dir)
     track_files = return_track_files(cur_dir)
+    f = open(cur_dir + '\\.cvs\\cvsData\\trackFiles.txt', 'w', encoding='utf-8-sig')
+    count = 0
 
     for t_file in track_files:
         if t_file not in files:
             print('    - ' + t_file)
-            return True
-    return False
+            count += 1
+        else:
+            f.write(t_file + '\n')
+    f.close()
+
+    if count < 1:
+        return False
+    return True
 
 
-def add_track_files(cur_dir, files):
-    count = 0
+def add_track_files(cur_dir, files, found_change_track_files):
     files_for_txt = []
     mode = 0
+    track_files = return_track_files(cur_dir)
     if isinstance(files, str):
         files = [files, '']
         del files[1]
@@ -93,16 +104,11 @@ def add_track_files(cur_dir, files):
     if not os.path.exists(cur_dir + '\\.cvs\\cvsData\\trackFiles.txt'):
         open(cur_dir + '\\.cvs\\cvsData\\trackFiles.txt', 'w+', encoding='utf-8-sig').close()
 
-    track_files = return_track_files(cur_dir)
-
     if mode == 0:
-        if add_deleted_files(cur_dir, files):
-            count += 1
-
         for file_s in files:
             files_for_txt.append(file_s)
             if file_s not in track_files:
-                count += 1
+                found_change_track_files = True
                 print('    + ' + file_s)
 
         with open(cur_dir + '\\.cvs\\cvsData\\trackFiles.txt', 'w', encoding='utf-8-sig') as f:
@@ -112,11 +118,40 @@ def add_track_files(cur_dir, files):
         if files[0] not in track_files:
             with open(cur_dir + '\\.cvs\\cvsData\\trackFiles.txt', 'a', encoding='utf-8-sig') as f:
                 f.write(files[0] + '\n')
-                count += 1
+                found_change_track_files = True
                 print('    + ' + files[0])
 
-    if count == 0:
+    if not found_change_track_files:
         print("Файл(ы) уже отслеживаются")
+
+
+def command_add(value, args_info):
+    found_change_track_files = add_deleted_files(cur_dir)
+    if not value and not args_info:
+        h_add()
+
+    elif not value and args_info:
+        print('Отслеживаемые файлы:')
+        if os.path.exists(cur_dir + '\\.cvs\\cvsData\\trackFiles.txt'):
+            with open(cur_dir + '\\.cvs\\cvsData\\trackFiles.txt', 'r', encoding='utf-8-sig') as f:
+                track_files = f.read().splitlines()
+            for file in track_files:
+                print('   ' + file)
+        else:
+            print('Нет отслеживаемых файлов\n')
+            print('Введите CVS.py add для получения справки')
+
+    elif value == '.' and not args_info:
+        file_list = find_all_files(cur_dir)
+        add_track_files(cur_dir, file_list, found_change_track_files)
+
+    elif not args_info:
+        file_list = find_all_files(cur_dir)
+
+        if value in file_list:
+            add_track_files(cur_dir, value, found_change_track_files)
+        else:
+            print("Не удалось найти файл " + value)
 
 
 if __name__ == "__main__":
@@ -131,28 +166,6 @@ if __name__ == "__main__":
         initDir(cur_dir)
 
     elif command == 'add':
-        if not value and not args.info:
-            h_add()
+        command_add(value, args.info)
 
-        elif not value and args.info:
-            print('Отслеживаемые файлы:')
-            if os.path.exists(cur_dir + '\\.cvs\\cvsData\\trackFiles.txt'):
-                with open(cur_dir + '\\.cvs\\cvsData\\trackFiles.txt', 'r', encoding='utf-8-sig') as f:
-                    track_files = f.read().splitlines()
-                for file in track_files:
-                    print('   ' + file)
-            else:
-                print('Нет отслеживаемых файлов\n')
-                print('Введите CVS.py add для получения справки')
-
-        elif value == '.' and not args.info:
-            file_list = find_all_files(cur_dir)
-            add_track_files(cur_dir, file_list)
-
-        elif not args.info:
-            file_list = find_all_files(cur_dir)
-
-            if value in file_list:
-                add_track_files(cur_dir, value)
-            else:
-                print("Не удалось найти файл " + value)
+    
