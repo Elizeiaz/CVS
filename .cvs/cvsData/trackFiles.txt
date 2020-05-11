@@ -1,5 +1,2 @@
-﻿.cvsignore.txt
-123.txt
-CVS.py
-help.py
-localCVS.iml
+﻿1.txt
+2.txt

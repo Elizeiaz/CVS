@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 import argparse
 import os
 import ctypes
@@ -188,10 +188,46 @@ def create_new_prjver_dir(cur_dir):
     os.makedirs(way_to_prjVer + '\\' + str(last_ver))
 
 
-def build_file(cur_dir):
-    last_ver = find_last_ver(cur_dir) + 1
-    for i in range(1, last_ver):
-        print(i)
+# Собирает файл с учётом изменений всех версий
+def build_file(cur_dir, file_name, ver=None):
+    if not ver:
+        last_ver = find_last_ver(cur_dir) + 1
+    else:
+        last_ver = int(ver)
+
+    builded_file = []
+
+    for i in range(1, last_ver + 1):
+        if i == 1:
+            with open(cur_dir + '\\.cvs\\prjVer\\' + str(i) + '\\' + file_name, 'r', encoding='utf-8-sig') as f:
+                builded_file = f.read().splitlines()
+
+        else:
+            if os.path.exists(cur_dir + '\\.cvs\\prjVer\\' + str(i) + '\\' + file_name):
+                with open(cur_dir + '\\.cvs\\prjVer\\' + str(i) + '\\' + file_name, 'r', encoding='utf-8-sig') as f:
+                    changes_str = f.read().splitlines()
+                    for change_str in changes_str:
+                        change_str = change_str.split(' ', 1)
+                        if change_str[0][-1] == '+':
+                            builded_file.insert(int(change_str[0][0:-1]) - 1, change_str[1])
+                        else:
+                            builded_file.pop(int(change_str[0][0:-1]) - 1)
+    return builded_file
+
+
+####################################################################################
+def make_file(cur_dir, file_name, ver=None):
+    files = file_name
+
+    if not ver:
+        builded_file = build_file(cur_dir, files)
+    else:
+        builded_file = build_file(cur_dir, files, ver)
+
+    with open(cur_dir + '\\' + files, 'w', encoding='utf-8-sig') as f:
+        for file_str in builded_file:
+            f.write(file_str + '\n')
+
 
 # Построчное сравнение двух файлов, если изменения были, то выводит True
 def make_diff(cur_dir, file_name):
@@ -199,12 +235,12 @@ def make_diff(cur_dir, file_name):
     check_diff = False
 
     f1 = open(cur_dir + '\\' + file_name, 'r', encoding='utf-8-sig')
-    # f2 = open(cur_dir + '\\.cvs\\prjVer\\' + str(last_ver - 1) + '\\' + file_name, 'r', encoding='utf-8-sig')
-    file1_text, file2_text = f1.read().splitlines(), f2.read().splitlines()
-    f1.close(), f2.close()
+    file1_text = f1.read().splitlines()
+    file2_text = build_file(cur_dir, file_name)
+    f1.close()
 
     d = difflib.Differ()
-    diff = d.compare(file1_text, file2_text)
+    diff = d.compare(file2_text, file1_text)
     count_str = 0
     finished_file = open(cur_dir + '\\.cvs\\prjVer\\' + str(last_ver) + '\\' + file_name, 'w', encoding='utf-8-sig')
 
@@ -223,7 +259,8 @@ def make_diff(cur_dir, file_name):
 
 if __name__ == "__main__":
     cur_dir = os.getcwd()
-    add_deleted_files(cur_dir)
+    if os.path.exists(cur_dir + '\\.cvs\\cvsData\\trackFiles.txt'):
+        add_deleted_files(cur_dir)
 
     args = checkArgs().parse_args()
     command, value = args.command, args.value
@@ -247,6 +284,11 @@ if __name__ == "__main__":
                 shutil.copy(cur_dir + '\\' + t_file, cur_dir + '\\.cvs\\prjVer\\' + str(last_ver + 1) + '\\' + t_file)
         else:
             for t_file in track_files:
-                #make_diff(cur_dir, t_file)
-                pass
-    build_file(cur_dir)
+                make_diff(cur_dir, t_file)
+
+        if len(os.listdir(cur_dir + '\\.cvs\\prjVer\\' + str(last_ver + 1))) == 0:
+            shutil.rmtree(cur_dir + '\\.cvs\\prjVer\\' + str(last_ver + 1))
+    elif command == 'reset':
+        t_files = return_track_files(cur_dir)
+        for t_file in t_files:
+            make_file(cur_dir, t_file, value)
