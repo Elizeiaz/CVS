@@ -4,6 +4,7 @@ import os
 import ctypes
 import difflib
 import shutil
+import datetime
 
 from help import *
 
@@ -13,9 +14,11 @@ def checkArgs():
     parse_Args = argparse.ArgumentParser(add_help=False, conflict_handler='resolve')
     parse_Args.add_argument('command', nargs='?', default='--about')
     parse_Args.add_argument('value', nargs='?')
+    parse_Args.add_argument('value_plus', nargs='?')
     parse_Args.add_argument('-h', '--help', action="store_true")
     parse_Args.add_argument('-a', '--about', action="store_true")
     parse_Args.add_argument('-i', '--info', action="store_true")
+
 
     return parse_Args
 
@@ -130,7 +133,7 @@ def add_track_files(cur_dir, files, found_change_track_files):
 
 
 # Работа с коммандой add
-def command_add(value, args_info):
+def command_add(cur_dir, value, args_info):
     found_change_track_files = add_deleted_files(cur_dir)
     if not value and not args_info:
         h_add()
@@ -188,8 +191,24 @@ def create_new_prjver_dir(cur_dir):
     os.makedirs(way_to_prjVer + '\\' + str(last_ver))
 
 
+# Обрабатывает название файла на поддиректории, создаёт их и выводит путь к файлу
+def way_to(way_dir, file_name):
+    reversed_file = file_name[::-1]
+    splited_file = reversed_file.split('\\', 1)
+    splited_file[0] = splited_file[0][::-1]
+    if len(splited_file) == 1:
+        return way_dir + '\\' + file_name
+
+    splited_file[1] = splited_file[1][::-1]
+    if not os.path.exists(way_dir + '\\' + splited_file[1]):
+        os.mkdir(way_dir + '\\' + splited_file[1])
+    return way_dir + '\\' + splited_file[1] + '\\' + splited_file[0]
+
+
 # Собирает файл с учётом изменений всех версий
 def build_file(cur_dir, file_name, ver=None):
+    first_ver = True
+
     if not ver:
         last_ver = find_last_ver(cur_dir) + 1
     else:
@@ -197,44 +216,53 @@ def build_file(cur_dir, file_name, ver=None):
 
     builded_file = []
 
-    for i in range(1, last_ver + 1):
-        if i == 1:
-            with open(cur_dir + '\\.cvs\\prjVer\\' + str(i) + '\\' + file_name, 'r', encoding='utf-8-sig') as f:
-                builded_file = f.read().splitlines()
+    for i in range(1, last_ver):
+        way_to_file = way_to(cur_dir + '\\.cvs\\prjVer\\' + str(i), file_name)
+        print(way_to_file)
+        if os.path.exists(way_to_file):
+            if first_ver == True:
+                with open(way_to_file, 'r', encoding='utf-8-sig') as f:
+                    builded_file = f.read().splitlines()
+                    first_ver = False
+            else:
+                if os.path.exists(way_to_file):
+                    with open(way_to_file, 'r', encoding='utf-8-sig') as f:
+                        changes_str = f.read().splitlines()
+                        check_minus = 0
 
-        else:
-            if os.path.exists(cur_dir + '\\.cvs\\prjVer\\' + str(i) + '\\' + file_name):
-                with open(cur_dir + '\\.cvs\\prjVer\\' + str(i) + '\\' + file_name, 'r', encoding='utf-8-sig') as f:
-                    changes_str = f.read().splitlines()
-                    for change_str in changes_str:
-                        change_str = change_str.split(' ', 1)
-                        if change_str[0][-1] == '+':
-                            builded_file.insert(int(change_str[0][0:-1]) - 1, change_str[1])
-                        else:
-                            builded_file.pop(int(change_str[0][0:-1]) - 1)
+                        for change_str in changes_str:
+                            change_str = change_str.split(' ', 1)
+                            if change_str[0][-1] == '+':
+                                builded_file.insert(int(change_str[0][0:-1]) - 1, change_str[1])
+                            else:
+                                builded_file.pop(int(change_str[0][0:-1]) - 1 - check_minus)
+                                check_minus += 1
+
     return builded_file
 
 
-####################################################################################
+# Заменяет файлы в основной директории
 def make_file(cur_dir, file_name, ver=None):
     files = file_name
+    way_to_file = way_to(cur_dir, file_name)
 
     if not ver:
         builded_file = build_file(cur_dir, files)
     else:
         builded_file = build_file(cur_dir, files, ver)
 
-    with open(cur_dir + '\\' + files, 'w', encoding='utf-8-sig') as f:
+    with open(way_to_file, 'w', encoding='utf-8-sig') as f:
         for file_str in builded_file:
             f.write(file_str + '\n')
-
+            print(file_str)
 
 # Построчное сравнение двух файлов, если изменения были, то выводит True
 def make_diff(cur_dir, file_name):
     last_ver = find_last_ver(cur_dir)
     check_diff = False
+    way_to_f1 = way_to(cur_dir, file_name)
 
-    f1 = open(cur_dir + '\\' + file_name, 'r', encoding='utf-8-sig')
+    f1 = open(way_to_f1, 'r', encoding='utf-8-sig')
     file1_text = f1.read().splitlines()
     file2_text = build_file(cur_dir, file_name)
     f1.close()
@@ -242,7 +270,8 @@ def make_diff(cur_dir, file_name):
     d = difflib.Differ()
     diff = d.compare(file2_text, file1_text)
     count_str = 0
-    finished_file = open(cur_dir + '\\.cvs\\prjVer\\' + str(last_ver) + '\\' + file_name, 'w', encoding='utf-8-sig')
+    way_to_finished_file = way_to(cur_dir + '\\.cvs\\prjVer\\' + str(last_ver), file_name)
+    finished_file = open(way_to_finished_file, 'w', encoding='utf-8-sig')
 
     for diff_str in diff:
         count_str += 1
@@ -253,8 +282,145 @@ def make_diff(cur_dir, file_name):
 
     finished_file.close()
     if not check_diff:
-        os.remove(cur_dir + '\\.cvs\\prjVer\\' + str(last_ver) + '\\' + file_name)
+        way_to_remove_file = way_to(cur_dir + '\\.cvs\\prjVer\\' + str(last_ver), file_name)
+        os.remove(way_to_remove_file)
     return check_diff
+
+
+# Проверяет есть ли файлы для отслеживания
+def track_files_is_empty(cur_dir):
+    track_files = return_track_files(cur_dir)
+    if len(track_files) == 0:
+        print('Добавьте файлы для отслеживания')
+        raise SystemExit()
+
+
+# Проверка версии проекта на существование
+def incorrect_prjver(cur_dir, ver):
+    last_ver = find_last_ver(cur_dir)
+    try:
+        ver = int(ver)
+    except ValueError:
+        print('Неккоректная версия проекта')
+        raise SystemExit
+
+    if ver < 1 or last_ver < ver:
+        print(str(ver) + ' версии проекта не существует')
+        raise SystemExit
+
+
+# Проверяет инициализирован ли .cvs
+def check_initialized(cur_dir):
+    if not os.path.exists(cur_dir + '\\.cvs'):
+        print('Неинициализирован .cvs')
+        raise SystemExit
+    if not os.path.exists(cur_dir + '\\.cvs\\cvsData'):
+        print('Не удалось найти .cvs\\cvsData\n')
+        print('Переинициализируйте .cvs')
+        raise SystemExit
+    if not os.path.exists(cur_dir + '\\.cvs\\prjVer'):
+        print('Не удалось найти .cvs\\prjVer\n')
+        print('Переинициализируйте .cvs')
+        raise SystemExit
+
+
+# Функционал для команды commit
+def command_commit(cur_dir, value):
+    last_ver = find_last_ver(cur_dir)
+    track_files = return_track_files(cur_dir)
+    create_new_prjver_dir(cur_dir)
+    way_to_new_prjver = cur_dir + '\\.cvs\\prjVer\\' + str(last_ver + 1)
+
+    if not os.path.exists(cur_dir + '\\.cvs\\prjVer\\.addedFiles'):
+        open(cur_dir + '\\.cvs\\prjVer\\.addedFiles', 'w', encoding='utf-8-sig').close()
+
+    with open(cur_dir + '\\.cvs\\prjVer\\.addedFiles', 'r', encoding='utf-8-sig') as a_files:
+        added_files = a_files.read().splitlines()
+
+    for t_file in track_files:
+        if t_file not in added_files:
+            way_to_t_file = way_to(way_to_new_prjver, t_file)
+            open(way_to_t_file, 'w').close()
+            way_to_first_file = way_to(cur_dir, t_file)
+            shutil.copy(way_to_first_file, way_to_t_file)
+            with open(cur_dir + '\\.cvs\\prjVer\\.addedFiles', 'a', encoding='utf-8-sig') as a_files:
+                a_files.write(t_file + '\n')
+        else:
+            make_diff(cur_dir, t_file)
+
+    if len(os.listdir(way_to_new_prjver)) == 0:
+        shutil.rmtree(way_to_new_prjver)
+    if os.path.exists(way_to_new_prjver):
+        print("Успешно добавлены файлы:")
+        files = os.listdir(way_to_new_prjver)
+        for file in files:
+            print('   ' + file)
+
+        if value:
+            with open(way_to_new_prjver + '\\.comment', 'w', encoding='utf-8-sig') as f:
+                f.write(value)
+
+        with open(way_to_new_prjver + '\\.date', 'w', encoding='utf-8-sig') as f:
+            d = datetime.datetime.now()
+            f.write(str(d.date()) + ' ' + str(d.hour) + ':' + str(d.minute))
+    else:
+        print('Нет изменённых файлов')
+
+
+# Функционал для команды reset
+def command_reset(cur_dir, value, value_plus):
+    if not value:
+        print('Введите версию проекта')
+        raise SystemExit
+
+    if not args.value_plus:
+        track_files = return_track_files(cur_dir)
+        incorrect_prjver(cur_dir, value)
+        for t_file in track_files:
+            make_file(cur_dir, t_file, value)
+        print("Откат на версию " + value + " произошёл успешно")
+    else:
+        value, args.value_plus = value_plus, value
+        incorrect_prjver(cur_dir, value)
+        t_file = value_plus
+        make_file(cur_dir, t_file, value)
+        print("Откат файла " + t_file + " на версию " + value + " произошёл успешно")
+
+
+# Функционал для командыв delete
+def command_delete(cur_dir, value):
+    if value:
+        track_files = return_track_files(cur_dir)
+        if value in track_files:
+            track_files.remove(value)
+            with open(cur_dir + '\\.cvs\\cvsData\\trackFiles.txt', 'w', encoding='utf-8-sig') as f:
+                for t_file in track_files:
+                    f.write(t_file + '\n')
+            print('Файл ' + value + ' больше не отслеживается')
+        else:
+            print('Файл ' + value + ' ещё не отслеживается')
+    else:
+        print('Вы не ввели название файла')
+
+
+# Возвращает информацию о всех сохранениях проекта
+def command_log(cur_dir):
+    return_log = 'Версии проекта:\n'
+    way_to_prjVer = cur_dir + '\\.cvs\\prjVer'
+    folders = os.listdir(way_to_prjVer)
+    if not len(folders) == 0:
+        for folder in folders:
+            if os.path.isdir(way_to_prjVer + '\\' + folder):
+                with open(way_to_prjVer + '\\' + folder + '\\.date', encoding='utf-8-sig') as f_date:
+                    return_log += '   ' + folder + ' версия от ' + f_date.read() + '\n'
+                if os.path.exists(way_to_prjVer + '\\' + folder + '\\.comment'):
+                    with open(way_to_prjVer + '\\' + folder + '\\.comment', encoding='utf-8-sig') as f_comment:
+                        return_log += '   Комментарий: ' + f_comment.read() + '\n'
+                return_log += '\n'
+    else:
+        print('Отсутствуют сохранённые версии проекта')
+        raise SystemExit
+    print(return_log)
 
 
 if __name__ == "__main__":
@@ -263,32 +429,35 @@ if __name__ == "__main__":
         add_deleted_files(cur_dir)
 
     args = checkArgs().parse_args()
-    command, value = args.command, args.value
+    command, value, value_plus = args.command, args.value, args.value_plus
 
-    printHelp(args)
+    if args.help or args.about or command == '--about':
+        printHelp(args)
+        raise SystemExit
 
     if command == 'init':
         initDir(cur_dir)
 
     elif command == 'add':
-        command_add(value, args.info)
+        check_initialized(cur_dir)
+        command_add(cur_dir, value, args.info)
 
     elif command == 'commit':
-        last_ver = find_last_ver(cur_dir)
-        track_files = return_track_files(cur_dir)
-        create_new_prjver_dir(cur_dir)
+        check_initialized(cur_dir)
+        track_files_is_empty(cur_dir)
+        command_commit(cur_dir, value)
 
-        if last_ver == 0:
-            for t_file in track_files:
-                open(cur_dir + '\\.cvs\\prjVer\\' + str(last_ver + 1) + '\\' + t_file, 'w').close()
-                shutil.copy(cur_dir + '\\' + t_file, cur_dir + '\\.cvs\\prjVer\\' + str(last_ver + 1) + '\\' + t_file)
-        else:
-            for t_file in track_files:
-                make_diff(cur_dir, t_file)
-
-        if len(os.listdir(cur_dir + '\\.cvs\\prjVer\\' + str(last_ver + 1))) == 0:
-            shutil.rmtree(cur_dir + '\\.cvs\\prjVer\\' + str(last_ver + 1))
     elif command == 'reset':
-        t_files = return_track_files(cur_dir)
-        for t_file in t_files:
-            make_file(cur_dir, t_file, value)
+        check_initialized(cur_dir)
+        command_reset(cur_dir, value, args.value_plus)
+
+    elif command == 'delete':
+        check_initialized(cur_dir)
+        track_files_is_empty(cur_dir)
+        command_delete(cur_dir, value)
+
+    elif command == 'log':
+        check_initialized(cur_dir)
+        command_log(cur_dir)
+    else:
+        print('Неизвестное значение \'' + command + '\'')

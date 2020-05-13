@@ -1,6 +1,5 @@
-﻿.git
-.gitignore
-.idea
+.git
 __pycache__
 cvs.py
 help.py
+.idea
