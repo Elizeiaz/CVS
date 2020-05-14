@@ -49,7 +49,7 @@ def initDir(cur_dir):
 # Функция ищет все файлы в dir, которых нет в .cvsignore.txt
 def find_all_files(cur_dir):
     files = os.listdir(cur_dir)
-    ignore_files = ['.cvs']
+    ignore_files = ['.cvs', '.cvsignore.txt']
     return_files = []
 
     if os.path.exists(cur_dir + '\\.cvsignore.txt'):
@@ -65,6 +65,7 @@ def find_all_files(cur_dir):
             for f in other_files:
                 if f not in ignore_files:
                     return_files.append(file + '\\' + f)
+
     return return_files
 
 
@@ -213,16 +214,17 @@ def build_file(cur_dir, file_name, ver=None):
         last_ver = find_last_ver(cur_dir) + 1
     else:
         last_ver = int(ver)
+        last_ver = int(ver)
 
     builded_file = []
 
-    for i in range(1, last_ver):
+    for i in range(1, last_ver + 1):
         way_to_file = way_to(cur_dir + '\\.cvs\\prjVer\\' + str(i), file_name)
-        print(way_to_file)
         if os.path.exists(way_to_file):
             if first_ver == True:
                 with open(way_to_file, 'r', encoding='utf-8-sig') as f:
                     builded_file = f.read().splitlines()
+
                     first_ver = False
             else:
                 if os.path.exists(way_to_file):
@@ -237,7 +239,6 @@ def build_file(cur_dir, file_name, ver=None):
                             else:
                                 builded_file.pop(int(change_str[0][0:-1]) - 1 - check_minus)
                                 check_minus += 1
-
     return builded_file
 
 
@@ -254,7 +255,6 @@ def make_file(cur_dir, file_name, ver=None):
     with open(way_to_file, 'w', encoding='utf-8-sig') as f:
         for file_str in builded_file:
             f.write(file_str + '\n')
-            print(file_str)
 
 # Построчное сравнение двух файлов, если изменения были, то выводит True
 def make_diff(cur_dir, file_name):
@@ -352,7 +352,7 @@ def command_commit(cur_dir, value):
         shutil.rmtree(way_to_new_prjver)
     if os.path.exists(way_to_new_prjver):
         print("Успешно добавлены файлы:")
-        files = os.listdir(way_to_new_prjver)
+        files = find_all_files(way_to_t_file)
         for file in files:
             print('   ' + file)
 
@@ -374,8 +374,9 @@ def command_reset(cur_dir, value, value_plus):
         raise SystemExit
 
     if not args.value_plus:
-        track_files = return_track_files(cur_dir)
         incorrect_prjver(cur_dir, value)
+        track_files = return_track_files(cur_dir)
+
         for t_file in track_files:
             make_file(cur_dir, t_file, value)
         print("Откат на версию " + value + " произошёл успешно")
@@ -429,6 +430,7 @@ if __name__ == "__main__":
         add_deleted_files(cur_dir)
 
     args = checkArgs().parse_args()
+    command, value, value_plus = args.command, args.value, args.value_plus
     command, value, value_plus = args.command, args.value, args.value_plus
 
     if args.help or args.about or command == '--about':

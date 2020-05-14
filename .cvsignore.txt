@@ -1,5 +1,5 @@
 .git
 __pycache__
-cvs.py
+CVS.py
 help.py
 .idea
