@@ -464,4 +464,4 @@ if __name__ == "__main__":
         check_initialized(cur_dir)
         command_log(cur_dir)
     else:
-        print('Неизвестное значение \'' + command + '\'')
+        print('Неизвестное значение \'' + command + '\'\n\nДля вывозва справки используйте CVS.py -h')
