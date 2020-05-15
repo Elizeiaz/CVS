@@ -1,5 +1,0 @@
-.git
-__pycache__
-CVS.py
-help.py
-.idea

@@ -211,7 +211,7 @@ def build_file(cur_dir, file_name, ver=None):
     first_ver = True
 
     if not ver:
-        last_ver = find_last_ver(cur_dir) + 1
+        last_ver = find_last_ver(cur_dir)
     else:
         last_ver = int(ver)
         last_ver = int(ver)
@@ -348,11 +348,13 @@ def command_commit(cur_dir, value):
         else:
             make_diff(cur_dir, t_file)
 
-    if len(os.listdir(way_to_new_prjver)) == 0:
+    cur_files = find_all_files(way_to_new_prjver)
+    if len(cur_files) == 0:
         shutil.rmtree(way_to_new_prjver)
+
     if os.path.exists(way_to_new_prjver):
         print("Успешно добавлены файлы:")
-        files = find_all_files(way_to_t_file)
+        files = find_all_files(way_to_new_prjver)
         for file in files:
             print('   ' + file)
 
