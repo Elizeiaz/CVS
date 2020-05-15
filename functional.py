@@ -48,7 +48,7 @@ def initDir(cur_dir):
 # Функция ищет все файлы в dir, которых нет в .cvsignore.txt
 def find_all_files(cur_dir):
     files = os.listdir(cur_dir)
-    ignore_files = ['.cvs', '.cvsignore.txt']
+    ignore_files = ['.cvs', '.cvsignore.txt', 'CVS.py', 'functional.py']
     return_files = []
 
     if os.path.exists(cur_dir + '\\.cvsignore.txt'):
