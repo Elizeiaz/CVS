@@ -1,7 +1,6 @@
 import os
 import difflib
-from ClassCVS import my_cvs
-from functional import way_to
+from binCVS.ClassCVS import my_cvs
 
 
 # Собирает файл с учётом изменений всех версий
@@ -11,7 +10,7 @@ def build_file(file_name, ver=my_cvs.last_project_version):
     builded_file = []
 
     for i in range(1, ver + 1):
-        way_to_file = way_to(my_cvs.cur_dir + '\\.cvs\\prjVer\\' + str(i), file_name)
+        way_to_file = way_to(os.path.join(my_cvs.way_to_prj_ver, str(i)), file_name)
         if os.path.exists(way_to_file):
             if first_ver:
                 with open(way_to_file, 'r', encoding='utf-8-sig') as f:
@@ -62,7 +61,7 @@ def make_diff(file_name):
     d = difflib.Differ()
     diff = d.compare(file2_text, file1_text)
     count_str = 0
-    way_to_finished_file = way_to(my_cvs.cur_dir + '\\.cvs\\prjVer\\' + str(my_cvs.last_project_version), file_name)
+    way_to_finished_file = way_to(my_cvs.way_to_last_prj_ver, file_name)
     finished_file = open(way_to_finished_file, 'w', encoding='utf-8-sig')
 
     for diff_str in diff:
@@ -74,6 +73,20 @@ def make_diff(file_name):
 
     finished_file.close()
     if not check_diff:
-        way_to_remove_file = way_to(my_cvs.cur_dir + '\\.cvs\\prjVer\\' + str(my_cvs.last_project_version), file_name)
+        way_to_remove_file = way_to(my_cvs.way_to_last_prj_ver, file_name)
         os.remove(way_to_remove_file)
     return check_diff
+
+
+# Обрабатывает название файла на поддиректории, создаёт их и выводит путь к файлу
+def way_to(way_dir, file_name):
+    reversed_file = file_name[::-1]
+    splited_file = reversed_file.split('\\', 1)
+    splited_file[0] = splited_file[0][::-1]
+    if len(splited_file) == 1:
+        return way_dir + '\\' + file_name
+
+    splited_file[1] = splited_file[1][::-1]
+    if not os.path.exists(way_dir + '\\' + splited_file[1]):
+        os.mkdir(way_dir + '\\' + splited_file[1])
+    return way_dir + '\\' + splited_file[1] + '\\' + splited_file[0]
