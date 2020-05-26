@@ -47,6 +47,7 @@ def add_deleted_files(directory):
         return False
     return True
 
+
 # Функция ищет все файлы в dir, которых нет в .cvsignore.txt
 def find_all_files(directory):
     files = os.listdir(directory)
@@ -68,3 +69,34 @@ def find_all_files(directory):
                     return_files.append(os.path.join(file, f))
 
     return return_files
+
+
+# Создает файл
+def create_file(way):
+    if not os.path.exists(str(way)):
+        open(str(way), 'w', encoding='utf-8-sig').close()
+        return True
+    return False
+
+
+def write_file(way, data):
+    with open(str(way), 'a', encoding='utf-8-sig') as f:
+        if isinstance(data, str):
+            f.write(data + '\n')
+        else:
+            for string in data:
+                f.write(string + '\n')
+
+
+def rewrite_file(way, data):
+    with open(way, 'w', encoding='utf-8-sig') as f:
+        if isinstance(data, str):
+            f.write(data + '\n')
+        else:
+            for string in data:
+                f.write(string + '\n')
+
+
+def read_file(way):
+    with open(way, 'a', encoding='utf-8-sig') as f:
+        return f.read().splitlines()

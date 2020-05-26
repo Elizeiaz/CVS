@@ -1,14 +1,13 @@
-import argparse
 import os
 import ctypes
 import shutil
 import datetime
+import re
 
 from binCVS.ClassCVS import my_cvs
-from binCVS.help import *
 from binCVS.build_files import make_diff, make_file, way_to
 from binCVS.exeptions import incorrect_prj_ver
-from binCVS.work_with_files import find_all_files
+from binCVS.work_with_files import find_all_files, create_file, write_file, rewrite_file, read_file
 
 
 # Функционал для команды init
@@ -19,38 +18,40 @@ def command_init():
 
         os.makedirs(my_cvs.way_to_prj_ver)
         os.makedirs(my_cvs.way_to_cvs_data)
+        print(my_cvs.track_files)
+        create_file(my_cvs.track_files)
         return True
 
     return False
 
 
 # Функционал для команды add
-def command_add(value, args_info):
-    if not value and not args_info:
-        h_add()
+def command_add(file_name):
+    all_files = find_all_files(my_cvs.cur_dir)
+    is_reg = False
+    new_track_files = []
 
-    elif not value and args_info:
-        print('Отслеживаемые файлы:')
-        if os.path.exists(my_cvs.way_to_track_file):
-            with open(my_cvs.way_to_track_file, 'r', encoding='utf-8-sig') as f:
-                track_files = f.read().splitlines()
-            for file in track_files:
-                print('   ' + file)
-        else:
-            print('Нет отслеживаемых файлов\n')
-            print('Введите CVS.py add для получения справки')
+    if file_name[0] == '*':
+        file_name = '.' + file_name + '$'
+        is_reg = True
+    elif file_name[0] == '.' and len(file_name) == 1:
+        file_name = file_name + '*[^\n]'
+        is_reg = True
 
-    elif value == '.' and not args_info:
-        file_list = find_all_files(my_cvs.cur_dir)
-        add_track_files(file_list)
+    if is_reg:
+        for cur_file in all_files:
+            if cur_file not in my_cvs.track_files:
+                matched_file = re.findall(file_name, cur_file)
+                if len(matched_file) > 0:
+                    new_track_files.append(matched_file[0])
+    else:
+        if file_name in all_files and file_name not in my_cvs.track_files:
+            new_track_files.append(file_name)
 
-    elif not args_info:
-        file_list = find_all_files(my_cvs.cur_dir)
+    if len(new_track_files) > 0:
+        write_file(my_cvs.track_files, new_track_files)
 
-        if value in file_list:
-            add_track_files(value)
-        else:
-            print("Не удалось найти файл " + value)
+    return new_track_files
 
 
 # Функционал для команды commit
@@ -58,11 +59,9 @@ def command_commit(value):
     create_new_prj_ver_dir()
     way_to_new_prjver = os.path.join(my_cvs.way_to_prj_ver, str(my_cvs.last_project_version + 1))
 
-    if not os.path.exists(my_cvs.way_to_added_file):
-        open(my_cvs.way_to_added_file, 'w', encoding='utf-8-sig').close()
+    create_file(my_cvs.way_to_added_file)
 
-    with open(my_cvs.way_to_added_file, 'r', encoding='utf-8-sig') as a_files:
-        added_files = a_files.read().splitlines()
+    added_files = read_file(my_cvs.way_to_added_file)
 
     for t_file in my_cvs.track_files:
         if t_file not in added_files:
