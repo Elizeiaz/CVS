@@ -1,13 +1,7 @@
 import os
+import re
 
-
-# Возвращает отслеживаемые файлы
-def return_track_files(directory):
-    if os.path.exists(os.path.join(directory, '.cvs', 'cvsData', 'trackFiles.txt')):
-        with open(os.path.join(directory, '.cvs', 'cvsData', 'trackFiles.txt'), 'r', encoding='utf-8-sig') as f:
-            track_files = f.read().splitlines()
-            return track_files
-    return []
+from binCVS.base_work_with_files import read_file, rewrite_file
 
 
 # Ищет номер последнего коммита
@@ -31,72 +25,53 @@ def find_last_ver(directory):
 def add_deleted_files(directory):
     files = find_all_files(directory)
     way_to_track_files = os.path.join(directory, '.cvs', 'cvsData', 'trackFiles.txt')
+    track_files = read_file(way_to_track_files)
+    deleted_files = []
+    cur_track_files = []
 
-    f = open(way_to_track_files, 'w', encoding='utf-8-sig')
-    count = 0
-
-    for t_file in way_to_track_files:
+    for t_file in track_files:
         if t_file not in files:
-            print('    - ' + t_file)
-            count += 1
+            deleted_files.append(t_file)
         else:
-            f.write(t_file + '\n')
-    f.close()
+            cur_track_files.append(t_file)
 
-    if count < 1:
-        return False
-    return True
+    rewrite_file(way_to_track_files, cur_track_files)
+
+    return deleted_files
 
 
 # Функция ищет все файлы в dir, которых нет в .cvsignore.txt
 def find_all_files(directory):
-    files = os.listdir(directory)
-    ignore_files = ['.cvs', '.cvsignore.txt', 'CVS.py', 'functional.py']
-    return_files = []
+    ignore_files = ['.cvs', '.cvsignore.txt', 'CVSprog.py', 'binCVS']
+    all_files = []
+    remove_files = []
 
-    if os.path.exists(os.path.join(directory, '.cvsignore.txt')):  # Херня какая-то
-        with open(os.path.join(directory, '.cvsignore.txt'), encoding='utf-8-sig') as ignore:
-            ignore_files += ignore.read().splitlines()
+    if os.path.exists(os.path.join(directory, '.cvsignore.txt')):
+        ignore_files += read_file(os.path.join(directory, '.cvsignore.txt'))
 
-    for file in files:
-        if os.path.isfile(os.path.join(directory, file)):
-            if file not in ignore_files:
-                return_files.append(file)
-        elif file not in ignore_files:
-            other_files = find_all_files(os.path.join(directory, file))
-            for f in other_files:
-                if f not in ignore_files:
-                    return_files.append(os.path.join(file, f))
+    for cur_file in os.listdir(directory):
+        if os.path.isfile(os.path.join(directory, cur_file)):
+            all_files.append(cur_file)
 
-    return return_files
+    for root, dirs, files in os.walk("."):
+        for dir in dirs:
+            if os.path.join(root[2:], dir) not in ignore_files:
+                for n_root, n_dirs, n_files in os.walk(dir):
+                    for n_file in n_files:
+                        all_files.append(os.path.join(dir, n_file))
 
-
-# Создает файл
-def create_file(way):
-    if not os.path.exists(str(way)):
-        open(str(way), 'w', encoding='utf-8-sig').close()
-        return True
-    return False
-
-
-def write_file(way, data):
-    with open(str(way), 'a', encoding='utf-8-sig') as f:
-        if isinstance(data, str):
-            f.write(data + '\n')
+    for ignore_file in ignore_files:
+        if ignore_file[0] == '*':
+            ignore_file = '.' + ignore_file + '$'
+            for all_file in all_files:
+                re_find_file = re.findall(ignore_file, all_file)
+                if re_find_file:
+                    remove_files.append(re_find_file[0])
         else:
-            for string in data:
-                f.write(string + '\n')
+            remove_files.append(ignore_file)
 
+    for remove_file in remove_files:
+        if remove_file in all_files:
+            all_files.remove(remove_file)
 
-def rewrite_file(way, data):
-    with open(way, 'w', encoding='utf-8-sig') as f:
-        if isinstance(data, str):
-            f.write(data + '\n')
-        else:
-            for string in data:
-                f.write(string + '\n')
-
-
-def read_file(way):
-    with open(way, 'a', encoding='utf-8-sig') as f:
-        return f.read().splitlines()
+    return all_files
