@@ -3,6 +3,7 @@ import os
 
 # Создает файл
 def create_file(way):
+    open(way, 'w', encoding='utf-8-sig').close()
     if not os.path.exists(way):
         open(way, 'w', encoding='utf-8-sig').close()
         return True

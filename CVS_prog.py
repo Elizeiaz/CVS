@@ -1,17 +1,17 @@
-import argparse
-import os
+﻿import argparse
 
-from binCVS.base_work_with_files import read_file
-
+from binCVS.command_wrapper import command_init_wrapper, command_add_wrapper, command_commit_wrapper, \
+    command_reset_wrapper, command_log_wrapped, command_track_wrapper, command_delete_wrapper, zero_args_wrapper
+from binCVS.command_handler import CommandHandler
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Локальный контроль версий', usage='CVSprog.py')
+    parser = argparse.ArgumentParser(description='Локальный контроль версий', usage='CVS_prog.py')
     parser.set_defaults(command='zero_args')
 
     subparsers = parser.add_subparsers()
 
-    parser_init = subparsers.add_parser('init', help='Инициализация CVSprog.py')
+    parser_init = subparsers.add_parser('init', help='Инициализация CVS_prog.py')
     parser_init.set_defaults(command='init')
 
     parser_add = subparsers.add_parser('add', help='Добавление файлов для отслеживания')
@@ -37,3 +37,22 @@ def parse_args():
     parser_reset.set_defaults(command='reset')
 
     return parser.parse_args()
+
+
+if __name__ == "__main__":
+    command_handler = {'init': command_init_wrapper,
+                       'add': command_add_wrapper,
+                       'commit': command_commit_wrapper,
+                       'reset': command_reset_wrapper,
+                       'log': command_log_wrapped,
+                       'track': command_track_wrapper,
+                       'delete': command_delete_wrapper,
+                       'zero_args': zero_args_wrapper}
+
+    args = parse_args()
+    cli_args = dict(args.__dict__)
+    command = cli_args.pop('command')
+
+    mini_handler = CommandHandler(command, **cli_args)
+    mini_handler.handler()
+    # command_handler[command](**cli_args)
