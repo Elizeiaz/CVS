@@ -6,7 +6,7 @@
 
 
 #### Запуск программы:
-    python CVS.py
+    python cvs_prog.py
     # Если Вы хотите вывести справку используйте python 
     CVS.py -h 
 
