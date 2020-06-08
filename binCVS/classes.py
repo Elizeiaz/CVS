@@ -32,7 +32,7 @@ class WorkingRep:
 
     @property
     def way_to_last_prj_ver(self):
-        return os.path.join(self.way_to_prj_ver, self.last_project_version)
+        return os.path.join(self.way_to_prj_ver, str(self.last_project_version))
 
     @property
     def way_to_cvs_data(self):

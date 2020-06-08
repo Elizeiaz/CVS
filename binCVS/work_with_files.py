@@ -55,7 +55,7 @@ def find_all_files(directory):
         if os.path.isfile(os.path.join(directory, cur_file)):
             all_files.append(cur_file)
 
-    for root, dirs, files in os.walk("."):
+    for root, dirs, files in os.walk(directory):
         for dir in dirs:
             if os.path.join(root[2:], dir) not in ignore_files:
                 for n_root, n_dirs, n_files in os.walk(dir):
@@ -76,4 +76,5 @@ def find_all_files(directory):
         if remove_file in all_files:
             all_files.remove(remove_file)
 
+    print(all_files)
     return all_files
