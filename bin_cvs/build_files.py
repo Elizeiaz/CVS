@@ -1,8 +1,8 @@
 import os
 import difflib
 
-from binCVS.classes import my_cvs
-from binCVS.base_work_with_files import write_file, rewrite_file, read_file
+from bin_cvs.classes import my_cvs
+from bin_cvs.base_work_with_files import write_file, rewrite_file, read_file
 
 
 # Собирает файл с учётом изменений всех версий

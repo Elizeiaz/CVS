@@ -4,10 +4,10 @@ import shutil
 import datetime
 import re
 
-from binCVS.classes import my_cvs
-from binCVS.build_files import make_diff, make_file, make_subdirectory
-from binCVS.work_with_files import find_all_files
-from binCVS.base_work_with_files import create_file, write_file, rewrite_file, read_file
+from bin_cvs.classes import my_cvs
+from bin_cvs.build_files import make_diff, make_file, make_subdirectory
+from bin_cvs.work_with_files import find_all_files
+from bin_cvs.base_work_with_files import create_file, write_file, rewrite_file, read_file
 
 
 # Функционал для команды init

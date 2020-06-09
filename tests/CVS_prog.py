@@ -1,8 +1,8 @@
 ﻿import argparse
 
-from binCVS.command_wrapper import command_init_wrapper, command_add_wrapper, command_commit_wrapper, \
+from bin_cvs.command_wrapper import command_init_wrapper, command_add_wrapper, command_commit_wrapper, \
     command_reset_wrapper, command_log_wrapped, command_track_wrapper, command_delete_wrapper, zero_args_wrapper
-from binCVS.command_handler import CommandHandler
+from bin_cvs.command_handler import CommandHandler
 
 
 def parse_args():

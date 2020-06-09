@@ -1,9 +1,9 @@
 import os
 
-from binCVS.command_wrapper import command_init_wrapper, command_add_wrapper, command_commit_wrapper, \
+from bin_cvs.command_wrapper import command_init_wrapper, command_add_wrapper, command_commit_wrapper, \
     command_reset_wrapper, command_log_wrapped, command_track_wrapper, command_delete_wrapper, zero_args_wrapper
-from binCVS.classes import my_cvs
-from binCVS.errors import IncorrectCVSVersionError, CVSNotInitializedError, TrackFilesIsEmptyError
+from bin_cvs.classes import my_cvs
+from bin_cvs.errors import IncorrectCVSVersionError, CVSNotInitializedError, TrackFilesIsEmptyError
 
 
 class CommandHandler:

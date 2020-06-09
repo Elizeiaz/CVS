@@ -1,7 +1,7 @@
 import os
-from binCVS.work_with_files import find_last_ver
-from binCVS.base_work_with_files import read_file
-from binCVS.work_with_files import add_deleted_files
+from bin_cvs.work_with_files import find_last_ver
+from bin_cvs.base_work_with_files import read_file
+from bin_cvs.work_with_files import add_deleted_files
 
 
 # Класс наполняющий path для CVS_prog.py

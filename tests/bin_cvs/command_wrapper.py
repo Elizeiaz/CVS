@@ -1,4 +1,4 @@
-from binCVS.functional import command_init, command_add, command_commit, command_reset, \
+from bin_cvs.functional import command_init, command_add, command_commit, command_reset, \
     command_delete, command_log, command_track
 
 

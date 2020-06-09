@@ -1,7 +1,7 @@
 import os
 import re
 
-from binCVS.base_work_with_files import read_file, rewrite_file
+from bin_cvs.base_work_with_files import read_file, rewrite_file
 
 
 # Ищет номер последнего коммита
@@ -44,7 +44,7 @@ def add_deleted_files(func):
 
 # Функция ищет все файлы в dir, которых нет в .cvsignore.txt
 def find_all_files(directory):
-    ignore_files = ['.cvs', '.cvsignore.txt', 'CVS_prog.py', 'binCVS']
+    ignore_files = ['.cvs', '.cvsignore.txt', 'CVS_prog.py', 'bin_cvs']
     all_files = []
     remove_files = []
 
@@ -57,7 +57,7 @@ def find_all_files(directory):
 
     for root, dirs, files in os.walk(directory):
         for dir in dirs:
-            if os.path.join(root[2:], dir) not in ignore_files:
+            if dir not in ignore_files:
                 for n_root, n_dirs, n_files in os.walk(dir):
                     for n_file in n_files:
                         all_files.append(os.path.join(dir, n_file))
@@ -76,5 +76,4 @@ def find_all_files(directory):
         if remove_file in all_files:
             all_files.remove(remove_file)
 
-    print(all_files)
     return all_files

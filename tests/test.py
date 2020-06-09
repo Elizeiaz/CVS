@@ -2,10 +2,10 @@ import unittest
 import os
 import shutil
 
-from binCVS.base_work_with_files import create_file, write_file, read_file, rewrite_file
-from binCVS.work_with_files import find_last_ver, add_deleted_files, find_all_files
-from binCVS.classes import CVS, WorkingRep
-from binCVS.functional import command_init, command_add, command_delete
+from bin_cvs.base_work_with_files import create_file, write_file, read_file, rewrite_file
+from bin_cvs.work_with_files import find_last_ver, add_deleted_files, find_all_files
+from bin_cvs.classes import CVS, WorkingRep
+from bin_cvs.functional import command_init, command_add, command_delete
 
 current_directory = os.getcwd()
 way_to_test_file = os.path.join(current_directory, 'test_file.txt')
